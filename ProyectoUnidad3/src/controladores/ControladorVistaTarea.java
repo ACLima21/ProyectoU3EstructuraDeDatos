@@ -4,6 +4,7 @@ import modelo.Nodo;
 import modelo.Tareas;
 import modelo.Pila;
 import modelo.Cola;
+import modelo.ListaSimple;
 import modelo.analisis.ListaSimpleLong;
 
 import vista.InterfazTarea;
@@ -111,21 +112,42 @@ public class ControladorVistaTarea implements ActionListener{
 	
 	//=============DESARROLLO=============	
 	public Pila formarPila() {
-        List<Nodo> nodos = new ArrayList<>();
+		ListaSimple nodos = new ListaSimple();
+	    Nodo actual = inicio;
+	    while (actual != null) {
+	        nodos.insertarFinal(actual);
+	        actual = actual.getEnlace();
+	    }
+
+	    // Ordenar la lista por fecha (de más reciente a más antigua)
+	    nodos.ordenarPorFecha();
+
+	    Pila pila = new Pila();
+
+	    // Recorrer la ListaSimple manualmente con un nombre diferente para la variable
+	    Nodo nodoActual = nodos.getInicio(); // Variable con nombre diferente
+	    while (nodoActual != null) {
+	        pila.push(nodoActual.getTarea());
+	        nodoActual = nodoActual.getEnlace();
+	    }
+
+	    return pila;
+		
+        /*List<Nodo> nodos = new ArrayList<>();
         Nodo actual = inicio;
         while (actual != null) {
             nodos.add(actual);
             actual = actual.getEnlace();
         }
 
-        nodos.sort((n1, n2) -> n2.getTarea().getFecha().compareTo(n1.getTarea().getFecha()));
+        nodos.sort((n1, n2) -> n2.getTarea().getFecha().compareTo(n1.getTarea().getFecha()));*/
 
-        Pila pila = new Pila();
+        /*Pila pila = new Pila();
         for (Nodo nodo : nodos) {
             pila.push(nodo.getTarea());
         }
 
-        return pila;
+        return pila;*/
     }
 	
 	public Cola formarCola() {

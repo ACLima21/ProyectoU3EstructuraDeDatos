@@ -14,7 +14,7 @@ import javax.swing.table.DefaultTableModel;
 
 public class ListaSimple{
 	//Dato
-	Nodo inicio;
+	private Nodo inicio;
 	
 	
 	//Constructor
@@ -23,6 +23,10 @@ public class ListaSimple{
 		inicio=null;
 	}
 	
+	public Nodo getInicio() {
+		return inicio;
+	}
+
 	//Operaciones
 	public void insertarInicio(Nodo e1) {//Método para ingresar un nuevo nodo al inicio de la lista
 		Nodo nuevo=new Nodo(e1.getTarea());//se crea un nuevo nodo con un dato que se pasó por parámetros
@@ -141,5 +145,64 @@ public class ListaSimple{
 			actual.setEnlace(null);
 		}
 		return encontrado;
+	}
+	
+	public void ordenarPorFecha() {
+	    if (inicio == null || inicio.getEnlace() == null) {
+	        return; // Lista vacía o con un solo elemento
+	    }
+	    
+	    // Implementación de ordenamiento burbuja para listas enlazadas
+	    boolean intercambio;
+	    do {
+	        intercambio = false;
+	        Nodo actual = inicio;
+	        
+	        while (actual != null && actual.getEnlace() != null) {
+	            Nodo siguiente = actual.getEnlace();
+	            
+	            // Comparar fechas (orden descendente: más reciente primero)
+	            if (actual.getTarea().getFecha().compareTo(siguiente.getTarea().getFecha()) < 0) {
+	                // Intercambiar las tareas de los nodos
+	                Tareas temp = actual.getTarea();
+	                actual.setTarea(siguiente.getTarea());
+	                siguiente.setTarea(temp);
+	                intercambio = true;
+	            }
+	            
+	            actual = actual.getEnlace();
+	        }
+	    } while (intercambio);
+	}
+
+	// Alternativa más eficiente usando ordenamiento por selección:
+	public void ordenarPorFechaSeleccion() {
+	    if (inicio == null || inicio.getEnlace() == null) {
+	        return;
+	    }
+	    
+	    Nodo actual = inicio;
+	    
+	    while (actual != null) {
+	        Nodo nodoMayor = actual;
+	        Nodo temp = actual.getEnlace();
+	        
+	        // Buscar el nodo con la fecha más reciente
+	        while (temp != null) {
+	            if (temp.getTarea().getFecha().compareTo(nodoMayor.getTarea().getFecha()) > 0) {
+	                nodoMayor = temp;
+	            }
+	            temp = temp.getEnlace();
+	        }
+	        
+	        // Intercambiar las tareas si se encontró una fecha más reciente
+	        if (nodoMayor != actual) {
+	            Tareas tempTarea = actual.getTarea();
+	            actual.setTarea(nodoMayor.getTarea());
+	            nodoMayor.setTarea(tempTarea);
+	        }
+	        
+	        actual = actual.getEnlace();
+	    }
 	}
 }
