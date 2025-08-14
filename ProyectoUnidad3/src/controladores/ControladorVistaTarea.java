@@ -12,14 +12,17 @@ import vista.NeuvaVista;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Font;
+import java.awt.Dimension;
+
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-
+import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
 import javax.swing.*;
+
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
 import org.jfree.data.category.*;
@@ -30,7 +33,6 @@ public class ControladorVistaTarea implements ActionListener{
 
 	private Nodo nodoTarea;
 	private Tareas tarea;
-	private Pila pila =new Pila();
 	private Cola cola = new Cola();
 	private InterfazTarea view=new InterfazTarea();
 	private int posicionNodo=0;
@@ -563,7 +565,217 @@ public class ControladorVistaTarea implements ActionListener{
 		
 	}
 	
-	public void analizarBusqueda() {
+	public void analizarBusqueda() {//Método principal que coordina ambos análisis
+	    int totalTareas = contarTareas();
+	    if (totalTareas < 5) {
+	        JOptionPane.showMessageDialog(view, 
+	            "Debe registrar al menos 5 tareas para realizar el análisis.",
+	            "Advertencia", JOptionPane.WARNING_MESSAGE);
+	        return;
+	    }
+	    
+	    // Realizar análisis de Lista Simple propia
+	    StringBuilder analisisListaSimple = analizarBusquedaListaSimple();
+	    
+	    // Realizar análisis de Lista Nativa de Java
+	    StringBuilder analisisListaNativa = analizarBusquedaListaNativa();
+	    
+	    // Combinar ambos análisis
+	    StringBuilder analisisCompleto = new StringBuilder();
+	    analisisCompleto.append("=== COMPARACIÓN DE ALGORITMOS DE BÚSQUEDA ===\n\n");
+	    analisisCompleto.append(analisisListaSimple);
+	    analisisCompleto.append("\n" + "=".repeat(50) + "\n\n");
+	    analisisCompleto.append(analisisListaNativa);
+	    
+	    // Mostrar análisis completo
+	    JTextArea textArea = new JTextArea(analisisCompleto.toString());
+	    textArea.setEditable(false);
+	    textArea.setFont(new Font("SimSun", Font.PLAIN, 15));
+	    JScrollPane scrollPane = new JScrollPane(textArea);
+	    scrollPane.setPreferredSize(new Dimension(600, 500));
+	    
+	    JOptionPane.showMessageDialog(null, scrollPane, 
+	        "Análisis Comparativo de Algoritmos", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	// Análisis de la Lista Simple propia
+	private StringBuilder analizarBusquedaListaSimple() {
+	    int totalTareas = contarTareas();
+	    ListaSimpleLong tiempos = new ListaSimpleLong();
+	    Nodo aux = inicio;
+	    
+	    // Medir tiempos de búsqueda en Lista Simple
+	    while (aux != null) {
+	        long inicioTiempo = System.nanoTime();
+	        buscarNodo(aux.getTarea());
+	        long finTiempo = System.nanoTime();
+	        tiempos.insertarFinal(finTiempo - inicioTiempo);
+	        aux = aux.getEnlace();
+	    }
+	    
+	    // Calcular estadísticas
+	    long mejor = tiempos.obtener(0);
+	    long peor = tiempos.obtener(0);
+	    long suma = 0;
+	    
+	    for (int i = 0; i < tiempos.contarNodos(); i++) {
+	        long tiempo = tiempos.obtener(i);
+	        if (tiempo < mejor) mejor = tiempo;
+	        if (tiempo > peor) peor = tiempo;
+	        suma += tiempo;
+	    }
+	    
+	    long promedio = suma / totalTareas;
+	    
+	    // Mostrar gráfica para Lista Simple
+	    mostrarGrafica(tiempos, "Lista Simple Propia", "Búsqueda en Lista Simple");
+	    
+	    // Construir análisis
+	    StringBuilder sb = new StringBuilder();
+	    sb.append("LISTA SIMPLE PROPIA\n");
+	    sb.append("Análisis del algoritmo: buscarNodo\n");
+	    sb.append("-----------------------------------\n");
+	    sb.append("Eficiencia: Búsqueda exhaustiva (lineal)\n");
+	    sb.append("Complejidad temporal:\n");
+	    sb.append("   - Mejor caso: O(1) - elemento en primera posición\n");
+	    sb.append("   - Peor caso: O(n) - elemento en última posición o no existe\n");
+	    sb.append("   - Promedio:  O(n/2) ≈ O(n)\n");
+	    sb.append("Complejidad espacial: O(1) - espacio constante adicional\n");
+	    sb.append("Notación asintótica: O(n)\n");
+	    sb.append("-----------------------------------\n");
+	    sb.append("Resultados de " + totalTareas + " búsquedas:\n");
+	    sb.append("Tiempo mejor caso (ns): " + String.format("%,d", mejor) + "\n");
+	    sb.append("Tiempo peor caso (ns): " + String.format("%,d", peor) + "\n");
+	    sb.append("Tiempo promedio (ns): " + String.format("%,d", promedio) + "\n");
+	    sb.append("Diferencia mejor-peor: " + String.format("%,d", (peor - mejor)) + " ns\n");
+	    
+	    return sb;
+	}
+
+	// Análisis de la Lista Nativa de Java
+	private StringBuilder analizarBusquedaListaNativa() {
+	    int totalTareas = contarTareas();
+	    
+	    // Convertir Lista Simple a ArrayList para comparación
+	    ArrayList<Tareas> listaNativa = new ArrayList<>();
+	    Nodo aux = inicio;
+	    while (aux != null) {
+	        listaNativa.add(aux.getTarea());
+	        aux = aux.getEnlace();
+	    }
+	    
+	    // Medir tiempos de búsqueda en ArrayList
+	    ListaSimpleLong tiemposNativa = new ListaSimpleLong();
+	    
+	    for (Tareas tarea : listaNativa) {
+	        long inicioTiempo = System.nanoTime();
+	        buscarEnListaNativa(listaNativa, tarea.getId());
+	        long finTiempo = System.nanoTime();
+	        tiemposNativa.insertarFinal(finTiempo - inicioTiempo);
+	    }
+	    
+	    // Calcular estadísticas
+	    long mejor = tiemposNativa.obtener(0);
+	    long peor = tiemposNativa.obtener(0);
+	    long suma = 0;
+	    
+	    for (int i = 0; i < tiemposNativa.contarNodos(); i++) {
+	        long tiempo = tiemposNativa.obtener(i);
+	        if (tiempo < mejor) mejor = tiempo;
+	        if (tiempo > peor) peor = tiempo;
+	        suma += tiempo;
+	    }
+	    
+	    long promedio = suma / totalTareas;
+	    
+	    // Mostrar gráfica para Lista Nativa
+	    mostrarGrafica(tiemposNativa, "ArrayList Java", "Búsqueda en ArrayList");
+	    
+	    // Construir análisis
+	    StringBuilder sb = new StringBuilder();
+	    sb.append("ARRAYLIST NATIVA DE JAVA\n");
+	    sb.append("Análisis del algoritmo: búsqueda lineal con stream/indexOf\n");
+	    sb.append("-----------------------------------\n");
+	    sb.append("Eficiencia: Búsqueda optimizada (lineal con optimizaciones JVM)\n");
+	    sb.append("Complejidad temporal:\n");
+	    sb.append("   - Mejor caso: O(1) - elemento en primera posición\n");
+	    sb.append("   - Peor caso: O(n) - elemento en última posición o no existe\n");
+	    sb.append("   - Promedio:  O(n/2) ≈ O(n)\n");
+	    sb.append("Complejidad espacial: O(1) - espacio constante adicional\n");
+	    sb.append("Notación asintótica: O(n)\n");
+	    sb.append("Optimizaciones: JVM, acceso directo por índice, cache locality\n");
+	    sb.append("-----------------------------------\n");
+	    sb.append("Resultados de " + totalTareas + " búsquedas:\n");
+	    sb.append("Tiempo mejor caso (ns): " + String.format("%,d", mejor) + "\n");
+	    sb.append("Tiempo peor caso (ns): " + String.format("%,d", peor) + "\n");
+	    sb.append("Tiempo promedio (ns): " + String.format("%,d", promedio) + "\n");
+	    sb.append("Diferencia mejor-peor: " + String.format("%,d", (peor - mejor)) + " ns\n");
+	    
+	    return sb;
+	}
+
+	// Método auxiliar para buscar en ArrayList
+	private Tareas buscarEnListaNativa(ArrayList<Tareas> lista, String id) {
+	    // Implementación similar a tu buscarNodo pero para ArrayList
+	    for (Tareas tarea : lista) {
+	        if (tarea.getId().equals(id)) {
+	            return tarea;
+	        }
+	    }
+	    return null;
+	}
+
+	// Método mostrarGrafica modificado para recibir parámetros adicionales
+	private void mostrarGrafica(ListaSimpleLong tiempos, String tipoLista, String titulo) {
+	    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+	    
+	    for (int i = 0; i < tiempos.contarNodos(); i++) {
+	        dataset.addValue(tiempos.obtener(i), "Tiempo (ns)", "Búsqueda " + (i + 1));
+	    }
+	    
+	    JFreeChart chart = ChartFactory.createBarChart(
+	        titulo + " - Tiempos de búsqueda", 
+	        "Iteración", 
+	        "Tiempo (nanosegundos)", 
+	        dataset, 
+	        PlotOrientation.VERTICAL, 
+	        true, true, false);
+	    
+	    // Personalizar el gráfico
+	    CategoryPlot plot = chart.getCategoryPlot();
+	    plot.setBackgroundPaint(java.awt.Color.WHITE);
+	    plot.setRangeGridlinePaint(java.awt.Color.GRAY);
+	    
+	    ChartPanel panel = new ChartPanel(chart);
+	    panel.setPreferredSize(new Dimension(700, 500));
+	    
+	    JFrame ventana = new JFrame("Análisis: " + tipoLista);
+	    ventana.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    ventana.add(panel);
+	    ventana.setSize(750, 550);
+	    ventana.setLocationRelativeTo(null);
+	    ventana.setVisible(true);
+	    
+	    // Pequeña pausa para que las ventanas no se abran exactamente al mismo tiempo
+	    try {
+	        Thread.sleep(100);
+	    } catch (InterruptedException e) {
+	        Thread.currentThread().interrupt();
+	    }
+	}
+	
+	private int contarTareas() {
+	    int count = 0;
+	    Nodo aux = inicio;
+	    while (aux != null) {
+	        count++;
+	        aux = aux.getEnlace();
+	    }
+	    return count;
+	}
+}
+
+/*public void analizarBusqueda() {
 	    int totalTareas = contarTareas();
 	    if (totalTareas < 5) {
 	        JOptionPane.showMessageDialog(null, 
@@ -644,13 +856,4 @@ public class ControladorVistaTarea implements ActionListener{
 	    ventana.setVisible(true);
 	}
 
-	private int contarTareas() {
-	    int count = 0;
-	    Nodo aux = inicio;
-	    while (aux != null) {
-	        count++;
-	        aux = aux.getEnlace();
-	    }
-	    return count;
-	}
-}
+	*/
