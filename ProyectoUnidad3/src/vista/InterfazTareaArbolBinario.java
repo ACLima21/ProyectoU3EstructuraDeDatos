@@ -33,6 +33,7 @@ public class InterfazTareaArbolBinario extends JFrame {
     public JButton btnBuscar;
     public JButton btnEliminar;
     public JButton btnRecorrer;
+    public JButton btnAnalisis;
 	public JTextField txtTitulo;
 	public JTextField txtFecha;
 	public JTextArea taDescripcion;
@@ -199,8 +200,19 @@ public InterfazTareaArbolBinario() {
         lblRecorrido.setOpaque(true);
         scrollPane_1.setViewportView(lblRecorrido);
         
+        btnAnalisis = new JButton("");
+        btnAnalisis.setOpaque(false);
+        btnAnalisis.setForeground(Color.WHITE);
+        btnAnalisis.setFont(new Font("SimSun", Font.BOLD, 24));
+        btnAnalisis.setFocusPainted(false);
+        btnAnalisis.setContentAreaFilled(false);
+        btnAnalisis.setBorderPainted(false);
+        btnAnalisis.setIcon(new ImageIcon(getClass().getResource("analysisImage.png")));
+        btnAnalisis.setBounds(1136, 10, 100, 72);
+        contentPane.add(btnAnalisis);
+        
         JLabel lblFondo_1 = new JLabel("");
-        lblFondo_1.setIcon(new ImageIcon(getClass().getResource("/vista/Texto del párrafo.jpg")));
+        lblFondo_1.setIcon(new ImageIcon(getClass().getResource("TextoDelParrafo.jpg")));
         lblFondo_1.setBackground(new Color(0, 0, 64));
         lblFondo_1.setBounds(0, 0, 1244, 677);
         contentPane.add(lblFondo_1);

@@ -594,8 +594,12 @@ public class ControladorVistaTarea implements ActionListener{
 	    JScrollPane scrollPane = new JScrollPane(textArea);
 	    scrollPane.setPreferredSize(new Dimension(600, 500));
 	    
-	    JOptionPane.showMessageDialog(null, scrollPane, 
-	        "Análisis Comparativo de Algoritmos", JOptionPane.INFORMATION_MESSAGE);
+	    JFrame ventanaAnalisis = new JFrame("Análisis Comparativo de Algoritmos");
+	    ventanaAnalisis.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    ventanaAnalisis.add(scrollPane);
+	    ventanaAnalisis.setSize(650, 550);
+	    ventanaAnalisis.setLocationRelativeTo(null);
+	    ventanaAnalisis.setVisible(true);
 	}
 
 	// Análisis de la Lista Simple propia

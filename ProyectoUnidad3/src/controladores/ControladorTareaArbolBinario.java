@@ -2,15 +2,27 @@ package controladores;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Font;
+import java.awt.Dimension;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import vista.InterfazTareaArbolBinario;
 
-import modelo.Nodo;
 import modelo.Tareas;
 import modelo.ArbolBinarioBusqueda;
 import modelo.ArbolNodo;
+import modelo.analisis.ListaSimpleLong;
+
+import org.jfree.chart.*;
+import org.jfree.chart.plot.*;
+import org.jfree.data.category.*;
+
+import java.util.ArrayList;
 
 public class ControladorTareaArbolBinario implements ActionListener {
 
@@ -25,6 +37,7 @@ public class ControladorTareaArbolBinario implements ActionListener {
 		this.view.btnBuscar.addActionListener(this);
 		this.view.btnEliminar.addActionListener(this);
 		this.view.btnRecorrer.addActionListener(this);
+		this.view.btnAnalisis.addActionListener(this);
 	}
 
 	// =============MÉTODO QUE INICIA LA VISTA=============
@@ -213,6 +226,10 @@ public class ControladorTareaArbolBinario implements ActionListener {
 		if (e.getSource() == view.btnRecorrer) {
 		    recorrerArbol();
 		}
+		
+		if (e.getSource() == view.btnAnalisis) {
+			analizarBusquedaArbol(); // Llamada al método de análisis
+		}
 
 	}
 
@@ -243,4 +260,266 @@ public class ControladorTareaArbolBinario implements ActionListener {
 		}
 
 	}
+	
+	// Método principal que coordina ambos análisis de búsqueda
+	public void analizarBusquedaArbol() {
+	    int totalTareas = contarNodosArbol();
+	    if (totalTareas < 5) {
+	        SwingUtilities.invokeLater(() -> {
+	            JOptionPane.showMessageDialog(null, 
+	                "Debe registrar al menos 5 tareas para realizar el análisis.",
+	                "Advertencia", JOptionPane.WARNING_MESSAGE);
+	        });
+	        return;
+	    }
+	    
+	    // Realizar análisis de Búsqueda Recursiva
+	    StringBuilder analisisRecursivo = analizarBusquedaRecursiva();
+	    
+	    // Realizar análisis de Búsqueda Iterativa
+	    StringBuilder analisisIterativo = analizarBusquedaIterativa();
+	    
+	    // Combinar ambos análisis
+	    StringBuilder analisisCompleto = new StringBuilder();
+	    analisisCompleto.append("=== ANÁLISIS DE ALGORITMOS DIVIDE Y VENCERÁS ===\n");
+	    analisisCompleto.append("=== BÚSQUEDA EN ÁRBOL BINARIO DE BÚSQUEDA ===\n\n");
+	    analisisCompleto.append(analisisRecursivo);
+	    analisisCompleto.append("\n" + "=".repeat(60) + "\n\n");
+	    analisisCompleto.append(analisisIterativo);
+	    
+	    // Mostrar análisis en JFrame independiente (no bloqueante)
+	    JTextArea textArea = new JTextArea(analisisCompleto.toString());
+	    textArea.setEditable(false);
+	    textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+	    JScrollPane scrollPane = new JScrollPane(textArea);
+	    scrollPane.setPreferredSize(new Dimension(700, 600));
+	    
+	    JFrame ventanaAnalisis = new JFrame("Análisis Comparativo - Árbol Binario de Búsqueda");
+	    ventanaAnalisis.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    ventanaAnalisis.add(scrollPane);
+	    ventanaAnalisis.setSize(750, 650);
+	    ventanaAnalisis.setLocationRelativeTo(null);
+	    ventanaAnalisis.setVisible(true);
+	}
+
+	// Análisis de la Búsqueda Recursiva (Divide y Vencerás)
+	private StringBuilder analizarBusquedaRecursiva() {
+	    int totalTareas = contarNodosArbol();
+	    ListaSimpleLong tiempos = new ListaSimpleLong();
+	    
+	    // Obtener todas las tareas del árbol para hacer búsquedas
+	    ArrayList<Tareas> tareasEnArbol = obtenerTareasDelArbol();
+	    
+	    // Medir tiempos de búsqueda recursiva
+	    for (Tareas tarea : tareasEnArbol) {
+	        long inicioTiempo = System.nanoTime();
+	        arbolBB.buscar(tarea); // Búsqueda recursiva
+	        long finTiempo = System.nanoTime();
+	        tiempos.insertarFinal(finTiempo - inicioTiempo);
+	    }
+	    
+	    // Calcular estadísticas
+	    long mejor = tiempos.obtener(0);
+	    long peor = tiempos.obtener(0);
+	    long suma = 0;
+	    
+	    for (int i = 0; i < tiempos.contarNodos(); i++) {
+	        long tiempo = tiempos.obtener(i);
+	        if (tiempo < mejor) mejor = tiempo;
+	        if (tiempo > peor) peor = tiempo;
+	        suma += tiempo;
+	    }
+	    
+	    long promedio = suma / totalTareas;
+	    
+	    // Mostrar gráfica para Búsqueda Recursiva
+	    mostrarGraficaArbol(tiempos, "Búsqueda Recursiva (Divide y Vencerás)", 
+	                        "Búsqueda Recursiva en ABB");
+	    
+	    // Calcular altura del árbol para análisis de complejidad
+	    int altura = calcularAlturaArbol();
+	    
+	    // Construir análisis
+	    StringBuilder sb = new StringBuilder();
+	    sb.append("BÚSQUEDA RECURSIVA - PARADIGMA DIVIDE Y VENCERÁS\n");
+	    sb.append("Algoritmo: Búsqueda binaria recursiva en ABB\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("CARACTERÍSTICAS DEL PARADIGMA:\n");
+	    sb.append("✓ Divide: El problema se divide en subproblemas más pequeños\n");
+	    sb.append("✓ Vencerás: Cada subproblema se resuelve recursivamente\n");
+	    sb.append("✓ Combina: No requiere combinación (resultado directo)\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("ANÁLISIS DE COMPLEJIDAD:\n");
+	    sb.append("Complejidad temporal:\n");
+	    sb.append("   - Mejor caso: O(1) - elemento en la raíz\n");
+	    sb.append("   - Caso promedio: O(log n) - árbol balanceado\n");
+	    sb.append("   - Peor caso: O(h) donde h es la altura del árbol\n");
+	    sb.append("   - Altura actual del árbol: " + altura + " niveles\n");
+	    sb.append("Complejidad espacial: O(h) - pila de recursión\n");
+	    sb.append("Notación asintótica: O(log n) en árbol balanceado, O(n) degenerado\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("VENTAJAS DE DIVIDE Y VENCERÁS:\n");
+	    sb.append("• Reduce la complejidad de O(n) a O(log n)\n");
+	    sb.append("• Aprovecha la estructura ordenada del ABB\n");
+	    sb.append("• Elimina la mitad del espacio de búsqueda en cada paso\n");
+	    sb.append("• Código elegante y fácil de entender\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("RESULTADOS DE " + totalTareas + " BÚSQUEDAS:\n");
+	    sb.append("Tiempo mejor caso (ns): " + String.format("%,d", mejor) + "\n");
+	    sb.append("Tiempo peor caso (ns): " + String.format("%,d", peor) + "\n");
+	    sb.append("Tiempo promedio (ns): " + String.format("%,d", promedio) + "\n");
+	    sb.append("Diferencia mejor-peor: " + String.format("%,d", (peor - mejor)) + " ns\n");
+	    sb.append("Eficiencia logarítmica: ≈" + String.format("%.2f", Math.log(totalTareas)/Math.log(2)) + " comparaciones teóricas\n");
+	    
+	    return sb;
+	}
+
+	// Análisis de la Búsqueda Iterativa
+	private StringBuilder analizarBusquedaIterativa() {
+	    int totalTareas = contarNodosArbol();
+	    ListaSimpleLong tiempos = new ListaSimpleLong();
+	    
+	    // Obtener todas las tareas del árbol
+	    ArrayList<Tareas> tareasEnArbol = obtenerTareasDelArbol();
+	    
+	    // Medir tiempos de búsqueda iterativa
+	    for (Tareas tarea : tareasEnArbol) {
+	        long inicioTiempo = System.nanoTime();
+	        arbolBB.buscarIterativo(tarea); // Búsqueda iterativa
+	        long finTiempo = System.nanoTime();
+	        tiempos.insertarFinal(finTiempo - inicioTiempo);
+	    }
+	    
+	    // Calcular estadísticas
+	    long mejor = tiempos.obtener(0);
+	    long peor = tiempos.obtener(0);
+	    long suma = 0;
+	    
+	    for (int i = 0; i < tiempos.contarNodos(); i++) {
+	        long tiempo = tiempos.obtener(i);
+	        if (tiempo < mejor) mejor = tiempo;
+	        if (tiempo > peor) peor = tiempo;
+	        suma += tiempo;
+	    }
+	    
+	    long promedio = suma / totalTareas;
+	    
+	    // Mostrar gráfica para Búsqueda Iterativa
+	    mostrarGraficaArbol(tiempos, "Búsqueda Iterativa", 
+	                        "Búsqueda Iterativa en ABB");
+	    
+	    int altura = calcularAlturaArbol();
+	    
+	    // Construir análisis
+	    StringBuilder sb = new StringBuilder();
+	    sb.append("BÚSQUEDA ITERATIVA - IMPLEMENTACIÓN NO RECURSIVA\n");
+	    sb.append("Algoritmo: Búsqueda binaria iterativa en ABB\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("CARACTERÍSTICAS DE LA IMPLEMENTACIÓN:\n");
+	    sb.append("✓ Usa ciclo while en lugar de recursión\n");
+	    sb.append("✓ Misma lógica de divide y vencerás pero iterativa\n");
+	    sb.append("✓ Control explícito del flujo de ejecución\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("ANÁLISIS DE COMPLEJIDAD:\n");
+	    sb.append("Complejidad temporal:\n");
+	    sb.append("   - Mejor caso: O(1) - elemento en la raíz\n");
+	    sb.append("   - Caso promedio: O(log n) - árbol balanceado\n");
+	    sb.append("   - Peor caso: O(h) donde h es la altura del árbol\n");
+	    sb.append("   - Altura actual del árbol: " + altura + " niveles\n");
+	    sb.append("Complejidad espacial: O(1) - espacio constante\n");
+	    sb.append("Notación asintótica: O(log n) en árbol balanceado, O(n) degenerado\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("VENTAJAS DE LA VERSIÓN ITERATIVA:\n");
+	    sb.append("• Menor uso de memoria (sin pila de recursión)\n");
+	    sb.append("• Evita posible desbordamiento de pila\n");
+	    sb.append("• Generalmente más eficiente en tiempo\n");
+	    sb.append("• Control más directo del algoritmo\n");
+	    sb.append("-----------------------------------------------------------\n");
+	    sb.append("RESULTADOS DE " + totalTareas + " BÚSQUEDAS:\n");
+	    sb.append("Tiempo mejor caso (ns): " + String.format("%,d", mejor) + "\n");
+	    sb.append("Tiempo peor caso (ns): " + String.format("%,d", peor) + "\n");
+	    sb.append("Tiempo promedio (ns): " + String.format("%,d", promedio) + "\n");
+	    sb.append("Diferencia mejor-peor: " + String.format("%,d", (peor - mejor)) + " ns\n");
+	    sb.append("Comparaciones máximas: ≈" + altura + " (altura del árbol)\n");
+	    
+	    return sb;
+	}
+
+	// Método auxiliar para obtener todas las tareas del árbol
+	private ArrayList<Tareas> obtenerTareasDelArbol() {
+	    ArrayList<Tareas> tareas = new ArrayList<>();
+	    obtenerTareasRecursivo(arbolBB.raizArbol(), tareas);
+	    return tareas;
+	}
+
+	private void obtenerTareasRecursivo(ArbolNodo nodo, ArrayList<Tareas> tareas) {
+	    if (nodo != null) {
+	        tareas.add((Tareas) nodo.getDato());
+	        obtenerTareasRecursivo(nodo.getIzdo(), tareas);
+	        obtenerTareasRecursivo(nodo.getDcho(), tareas);
+	    }
+	}
+
+	// Método para contar nodos en el árbol
+	private int contarNodosArbol() {
+	    return contarNodosRecursivo(arbolBB.raizArbol());
+	}
+
+	private int contarNodosRecursivo(ArbolNodo nodo) {
+	    if (nodo == null) return 0;
+	    return 1 + contarNodosRecursivo(nodo.getIzdo()) + contarNodosRecursivo(nodo.getDcho());
+	}
+
+	// Método para calcular la altura del árbol
+	private int calcularAlturaArbol() {
+	    return calcularAlturaRecursivo(arbolBB.raizArbol());
+	}
+
+	private int calcularAlturaRecursivo(ArbolNodo nodo) {
+	    if (nodo == null) return 0;
+	    int alturaIzq = calcularAlturaRecursivo(nodo.getIzdo());
+	    int alturaDer = calcularAlturaRecursivo(nodo.getDcho());
+	    return Math.max(alturaIzq, alturaDer) + 1;
+	}
+
+	// Método mostrarGrafica especializado para análisis de árbol
+	private void mostrarGraficaArbol(ListaSimpleLong tiempos, String tipoAlgoritmo, String titulo) {
+	    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+	    
+	    for (int i = 0; i < tiempos.contarNodos(); i++) {
+	        dataset.addValue(tiempos.obtener(i), "Tiempo (ns)", "Búsqueda " + (i + 1));
+	    }
+	    
+	    JFreeChart chart = ChartFactory.createLineChart(
+	        titulo + " - Tiempos de búsqueda", 
+	        "Número de búsqueda", 
+	        "Tiempo (nanosegundos)", 
+	        dataset, 
+	        PlotOrientation.VERTICAL, 
+	        true, true, false);
+	    
+	    // Personalizar el gráfico
+	    CategoryPlot plot = chart.getCategoryPlot();
+	    plot.setBackgroundPaint(java.awt.Color.WHITE);
+	    plot.setRangeGridlinePaint(java.awt.Color.LIGHT_GRAY);
+	    plot.setDomainGridlinePaint(java.awt.Color.LIGHT_GRAY);
+	    
+	    ChartPanel panel = new ChartPanel(chart);
+	    panel.setPreferredSize(new Dimension(800, 600));
+	    
+	    JFrame ventana = new JFrame("Análisis: " + tipoAlgoritmo);
+	    ventana.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    ventana.add(panel);
+	    ventana.setSize(850, 650);
+	    ventana.setLocationRelativeTo(null);
+	    ventana.setVisible(true);
+	    
+	    // Pequeña pausa para que las ventanas no se abran simultáneamente
+	    try {
+	        Thread.sleep(150);
+	    } catch (InterruptedException e) {
+	        Thread.currentThread().interrupt();
+	    }
+	}
 }
+
